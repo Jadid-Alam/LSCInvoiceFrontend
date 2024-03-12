@@ -1,1 +1,10 @@
-"Changes in newbranch" 
+class Hello
+{
+	public static void main(String[] args)
+	{
+		System.out.println("Hello!");
+		return;
+	}
+}
+
+// commit the file
