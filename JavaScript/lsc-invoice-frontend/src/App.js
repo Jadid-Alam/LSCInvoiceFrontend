@@ -1,5 +1,6 @@
 import logo from './images/Logo.jpg';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import './App.css';
 
 function App() {
@@ -12,7 +13,7 @@ function App() {
     town: '',
     county: '',
     postcode: '',
-    noOfStudents: '',
+    noOfStudents: '1',
    });
 
    const [studentData, setStudentData] = useState({
@@ -38,6 +39,21 @@ function App() {
   });
   const [page, setPage] = useState(0);
 
+  const [parents, setParents] = useState([]);
+
+  // fetch data
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/get-parents")
+      .then((response) => {
+        const names = response.data.map((parent) => parent.id+": "+parent.title+". "+parent.fname+" "+parent.lname);
+        setParents(names);
+      })
+      .catch((error) => console.error("Error fetching students:", error));
+  }, [page,]);
+
+  // on data change methods
+
   const handleBuild = (e) => {
     const { name, value } = e.target;
     setBuildData({
@@ -62,56 +78,154 @@ function App() {
     });
   };
 
+  useEffect(() => {
+    setBuildData({
+      parentId: "",
+      invoiceDate: "",
+      startDate: "",
+      endDate: "",
+      hoursPerWeek: "",
+      feesPerWeek: "",
+      totalPrice: "",
+    });
+    setCustomerData({
+      registry: '',
+      title: '',
+      firstName: '',
+      lastName: '',
+      address: '',
+      town: '',
+      county: '',
+      postcode: '',
+      noOfStudents: '1',
+    });
+    setStudentData({
+      studentName1: '',
+      studentDOB1: '',
+      studentName2: '',
+      studentDOB2: '',
+      studentName3: '',
+      studentDOB3: '',
+      studentName4: '',
+      studentDOB4: '',
+    });
+  }, [page]);
+
+  // submit methods
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form Data:", buildData);
+    axios
+      .post("http://localhost:8080/api/build-pdf", buildData)
+      .then((response) => {
+        console.log("Student added:", response.data);
+        setPage(page);
+      })
+      .catch((error) => {
+        console.error("Error adding student:", error);
+      });
   };
 
   const handleaddCustomer = (e) => {
     e.preventDefault();
-    console.log("Form Data:", customerData, studentData);
+    axios
+      .post("http://localhost:8080/api/add-customer", customerData)
+      .then((response) => {
+        console.log("Student added:", response.data);
+      })
+      .catch((error) => {
+        console.error("Error adding student:", error);
+      });
+    axios
+      .post("http://localhost:8080/api/add-student", studentData)
+      .then((response) => {
+        console.log("Student added:", response.data);
+      })
+      .catch((error) => {
+        console.error("Error adding student:", error);
+      });
+    setPage(0);
   };
 
-  const navClass = `border-white hover:border-blue-800 hover:text-blue-700 border-b-2 transform transition hover:translate-y-1 hover:transform hover:transition duration-500`;
-  const labelClass = `block text-xs p-1 text-gray-700 md:text-lg font-semibold text-left md:p-2`;
-  const inputClass = `mt-1 text-xs md:text-lg block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pl-1`;
+
+  // render student inputs
 
   const renderStudent = () => {
     const inputs = [];
 
-  for (let i = 1; i <= customerData.noOfStudents; i++) {
-    inputs.push(
-      <div key={i} className='border-2 border-blue-800 rounded-md p-2 md:p-4'>
-        <div className='twoItems mx-auto my-auto'>
-          <label htmlFor={`studentName${i}`} className={labelClass}>Student Name</label>
-          <input
-            type="text"
-            id={`studentName${i}`}
-            name={`studentName${i}`}
-            value={studentData[`studentName${i}`] || ''}
-            onChange={handleStudent}
-            className={inputClass}
-            required
-          />
+    for (let i = 1; i <= customerData.noOfStudents; i++) {
+      inputs.push(
+        <div key={i} className='border-2 border-blue-800 rounded-md p-2 md:p-4'>
+          <div className='twoItems mx-auto my-auto'>
+            <label htmlFor={`studentName${i}`} className={labelClass}>Student Name</label>
+            <input
+              type="text"
+              id={`studentName${i}`}
+              name={`studentName${i}`}
+              value={studentData[`studentName${i}`] || ''}
+              onChange={handleStudent}
+              className={inputClass}
+              required
+            />
+          </div>
+          <div className='twoItems mx-auto my-auto'>
+            <label htmlFor={`studentDOB${i}`} className={labelClass}>Student DOB</label>
+            <input
+              type="date"
+              id={`studentDOB${i}`}
+              name={`studentDOB${i}`}
+              value={studentData[`studentDOB${i}`] || ''}
+              onChange={handleStudent}
+              className={inputClass}
+              required
+            />
+          </div>
         </div>
-        <div className='twoItems mx-auto my-auto'>
-          <label htmlFor={`studentDOB${i}`} className={labelClass}>Student DOB</label>
-          <input
-            type="date"
-            id={`studentDOB${i}`}
-            name={`studentDOB${i}`}
-            value={studentData[`studentDOB${i}`] || ''}
-            onChange={handleStudent}
-            className={inputClass}
-            required
-          />
-        </div>
-      </div>
-    );
+      );
+    }
+
+    return inputs;
   }
 
-  return inputs;
+  const renderParents = () => {
+    const inputs = [];
+
+    for (let i = 1; i <= parents.length; i++) {
+      inputs.push(
+        <option key={i} value={parents[i-1]} className={inputClass}>{parents[i-1]}</option>
+      );
+    }
+
+    return inputs;
   }
+
+  const renderStudents = () => {
+    const inputs = [];
+
+    for (let i = 1; i <= customerData.noOfStudents; i++) {
+      inputs.push(
+        <div>
+          <div className='twoItems mx-auto my-auto'>
+            <label htmlFor="hoursPerWeek" className={labelClass}>Hours/Week</label>
+            <input type="number" id="hoursPerWeek" name="hoursPerWeek" value={buildData.hoursPerWeek} onChange={handleBuild} className={inputClass} required />
+          </div>
+          <div className='twoItems mx-auto my-auto'>
+            <label htmlFor="feesPerWeek" className={labelClass}>Fees/Week</label>
+            <input type="number" id="feesPerWeek" name="feesPerWeek" value={buildData.feesPerWeek} onChange={handleBuild} className={inputClass} required />
+          </div>
+        </div>
+      );
+    }
+    
+    return inputs;
+  }
+        
+
+  // common classes
+
+  const navClass = `border-white hover:border-blue-800 hover:text-blue-700 border-b-2 transform transition hover:translate-y-1 hover:transform hover:transition duration-500`;
+  const labelClass = `block text-xs p-1 text-gray-700 md:text-lg font-semibold text-left md:p-2`;
+  const inputClass = `mt-1 text-xs md:text-lg block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pl-1`;
 
   return (
     <div className="App">
@@ -134,7 +248,9 @@ function App() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className='twoItems mx-auto my-auto'>
                   <label htmlFor="parentId" className={labelClass}>Parent ID</label>
-                  <input type="text" id="parentId" name="parentId" value={buildData.parentId} onChange={handleBuild} className={inputClass} required />
+                  <select id="parentId" name="parentId" value={buildData.parentId} onChange={handleBuild} className={inputClass} required>
+                  {renderParents()}
+                  </select>
                 </div>
                 <div className='twoItems mx-auto my-auto'>
                   <label htmlFor="invoiceDate" className={labelClass}>Invoice Date</label>
@@ -147,14 +263,7 @@ function App() {
                   <label htmlFor="endDate" className={labelClass}>End Date</label>
                   <input type="date" id="endDate" name="endDate" value={buildData.endDate} onChange={handleBuild} className={inputClass} required />
                 </div>
-                <div className='twoItems mx-auto my-auto'>
-                  <label htmlFor="hoursPerWeek" className={labelClass}>Hours/Week</label>
-                  <input type="number" id="hoursPerWeek" name="hoursPerWeek" value={buildData.hoursPerWeek} onChange={handleBuild} className={inputClass} required />
-                </div>
-                <div className='twoItems mx-auto my-auto'>
-                  <label htmlFor="feesPerWeek" className={labelClass}>Fees/Week</label>
-                  <input type="number" id="feesPerWeek" name="feesPerWeek" value={buildData.feesPerWeek} onChange={handleBuild} className={inputClass} required />
-                </div>
+                
                 <div className='twoItems mx-auto my-auto'>
                   <label htmlFor="totalPrice" className={labelClass}>Total Price</label>
                   <input type="number" id="totalPrice" name="totalPrice" value={buildData.totalPrice} onChange={handleBuild} className={inputClass} required />
@@ -222,7 +331,9 @@ function App() {
       </main>
         
       <footer>
-
+        <div className='bg-gradient-to-b from-white to-blue-900 h-[2vh] w-full'></div>
+        <p className='text-center text-xs text-gray-700 md:text-lg font-semibold p-2 md:p-4'>© 2024 All Rights Reserved</p>
+        <p className='text-center text-xs text-gray-700 md:text-lg font-semibold p-2 md:p-4'>Developed by: <a href="https://www.jadid-alam.com/" target="_blank" rel="noreferrer" className='text-blue-700'>Jadid Alam</a></p>
       </footer>
     </div>
   );
