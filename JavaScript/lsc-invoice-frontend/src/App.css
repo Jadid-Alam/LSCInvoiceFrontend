@@ -1,0 +1,14 @@
+.main-content {
+  grid-column: 2;
+}
+
+.twoItems {
+  display: grid;
+  grid-template-columns: 25% 75%;
+}
+
+
+.fiveItems {
+  display: grid;
+  grid-template-columns: 15% 30% 10% 15% 30%;
+}
